@@ -399,6 +399,10 @@ long Call_impl::get_current_source_id() {
   return curr_src_id;
 }
 
+void Call_impl::set_current_source_id(long id) {
+  curr_src_id = id;
+}
+
 bool Call_impl::add_source(long src) {
   if (src == -1) {
     return false;

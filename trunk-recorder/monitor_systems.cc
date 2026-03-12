@@ -1,4 +1,5 @@
 #include "monitor_systems.h"
+#include "call_conventional.h"
 #include "recorders/p25_recorder.h"
 #include <chrono>
 #include <boost/log/sinks/text_file_backend.hpp>
@@ -243,6 +244,19 @@ void manage_conventional_call(Call *call, Config &config) {
     // if any recording has happened
 
     if (call->get_current_length() > 0) {
+      Call_conventional *conv_call = static_cast<Call_conventional *>(call);
+      if (conv_call->get_recording_start_time() == 0) {
+        conv_call->set_recording_start_time(time(NULL));
+      }
+      if (!conv_call->get_call_start_sent()) {
+        System *sys = call->get_system();
+        bool has_decoders = sys->get_mdc_enabled() || sys->get_fsync_enabled() || sys->get_star_enabled() || sys->get_tps_enabled();
+        bool delay_elapsed = !has_decoders || (time(NULL) - conv_call->get_recording_start_time() >= 1);
+        if (delay_elapsed) {
+          conv_call->set_call_start_sent(true);
+          plugman_call_start(call);
+        }
+      }
 
       BOOST_LOG_TRIVIAL(trace) << "[" << call->get_short_name() << "]\t\033[0;34m" << call->get_call_num() << "C\033[0m Call Length: " << call->get_current_length() << "s\t Idle: " << call->get_recorder()->is_idle() << "\t Squelched: " << call->get_recorder()->is_squelched() << " Idle Count: " << call->get_idle_count();
 

@@ -90,6 +90,7 @@ public:
   virtual std::string get_system_type() = 0;
   virtual double get_final_length() = 0;
   virtual long get_current_source_id() = 0;
+  virtual void set_current_source_id(long id) = 0;
   virtual bool get_conversation_mode() = 0;
   virtual System *get_system() = 0;
   virtual std::vector<Transmission> get_transmissions() = 0;

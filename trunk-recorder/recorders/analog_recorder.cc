@@ -343,6 +343,7 @@ void analog_recorder::tune_freq(double f) {
 void analog_recorder::decoder_callback_handler(long unitId, const char *signaling_type, gr::blocks::SignalType signal) {
   if (call != NULL) {
     wav_sink->set_source(unitId);
+    call->set_current_source_id(unitId);
     plugman_signal(unitId, signaling_type, signal, call, call->get_system(), this);
   } else {
     plugman_signal(unitId, signaling_type, signal, NULL, NULL, this);

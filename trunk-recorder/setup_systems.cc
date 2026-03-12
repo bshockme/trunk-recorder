@@ -49,7 +49,6 @@ bool setup_conventional_channel(System *system, double frequency, long channel_i
         system->add_conventional_recorder(rec);
         calls.push_back(call);
         plugman_setup_recorder((Recorder *)rec.get());
-        plugman_call_start(call);
       } else if (system->get_system_type() == "conventionalDMR") {
         // Because of dynamic mod assignment we can not start the recorder until the graph has been unlocked.
         // This has something to do with the way the Selector block works.

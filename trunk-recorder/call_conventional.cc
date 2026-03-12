@@ -8,6 +8,8 @@
 Call_conventional::Call_conventional(long t, double f, System *s, Config c, double squelch_db, bool signal_detection) : Call_impl(t, f, s, c) {
   this->squelch_db = squelch_db;
   this->signal_detection = signal_detection;
+  this->call_start_sent = false;
+  this->recording_start_time = 0;
   BOOST_LOG_TRIVIAL(info) << "[" << sys->get_short_name() << "]\tFreq: " << format_freq(f) << "\tSquelch: " << squelch_db << " dB\tSignal Detection: " << signal_detection;
 }
 
@@ -17,6 +19,8 @@ void Call_conventional::restart_call() {
   signal = DB_UNSET;
   noise = DB_UNSET;
   curr_src_id = -1;
+  call_start_sent = false;
+  recording_start_time = 0;
 
   auto now = std::chrono::system_clock::now();
   start_time    = std::chrono::system_clock::to_time_t(now);
