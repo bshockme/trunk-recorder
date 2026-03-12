@@ -31,6 +31,7 @@ jobs:
           tags: |
             type=edge,branch=master
             type=ref,event=branch,prefix=RC,enable=${{ startsWith(github.ref, 'refs/heads/rc/') }}
+            type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/feat/') }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
