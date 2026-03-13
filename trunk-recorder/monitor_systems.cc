@@ -254,6 +254,8 @@ void manage_conventional_call(Call *call, Config &config) {
         bool delay_elapsed = !has_decoders || (time(NULL) - conv_call->get_recording_start_time() >= 1);
         if (delay_elapsed) {
           conv_call->set_call_start_sent(true);
+          std::string loghdr = log_header(call->get_system()->get_short_name(), call->get_call_num(), call->get_talkgroup_display(), call->get_freq());
+          BOOST_LOG_TRIVIAL(info) << loghdr << "\u001b[32mConventional Call Start\u001b[0m - Length: " << call->get_current_length() << "s";
           plugman_call_start(call);
         }
       }
@@ -280,7 +282,6 @@ void manage_conventional_call(Call *call, Config &config) {
         call->restart_call();
         if (recorder != NULL) {
           plugman_setup_recorder(recorder);
-          plugman_call_start(call);
         }
       } else if ((call->get_current_length() > call->get_system()->get_max_duration()) && (call->get_system()->get_max_duration() > 0)) {
         Recorder *recorder = call->get_recorder();
@@ -288,7 +289,6 @@ void manage_conventional_call(Call *call, Config &config) {
         call->restart_call();
         if (recorder != NULL) {
           plugman_setup_recorder(recorder);
-          plugman_call_start(call);
         }
       }
     } else if (!call->get_recorder()->is_active()) {
