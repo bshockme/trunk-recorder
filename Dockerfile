@@ -45,7 +45,9 @@ WORKDIR /src
 COPY . .
 
 RUN git -C /src/user_plugins \
-       clone --depth 1 https://github.com/TrunkRecorder/tr-plugin-mqtt.git
+       clone --depth 1 https://github.com/TrunkRecorder/tr-plugin-mqtt.git && \
+    git -C /src/user_plugins \
+       clone --depth 1 https://github.com/taclane/tr-web.git
 
 WORKDIR /src/build
 
