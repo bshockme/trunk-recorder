@@ -65,7 +65,9 @@ RUN apt-get update && apt-get -y upgrade && apt-get install --no-install-recomme
 COPY --from=builder /newroot /
 
 # Fix the error message level for SmartNet
-RUN mkdir -p /etc/gnuradio/conf.d/ && echo 'log_level = info' >> /etc/gnuradio/conf.d/gnuradio-runtime.conf && ldconfig
+# Register the trunk-recorder plugin directory so dlopen() can find plugins by name
+RUN echo '/usr/local/lib/trunk-recorder' > /etc/ld.so.conf.d/trunk-recorder.conf && \
+    mkdir -p /etc/gnuradio/conf.d/ && echo 'log_level = info' >> /etc/gnuradio/conf.d/gnuradio-runtime.conf && ldconfig
 WORKDIR /app
 
 # GNURadio requires a place to store some files, can only be set via $HOME env var.
