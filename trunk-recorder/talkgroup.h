@@ -24,9 +24,11 @@ public:
   // For Conventional
   double freq;
   double tone;
+  int dcs_code;       // 0 = no DCS; 3-digit octal code stored as decimal (e.g. 23 for D023)
+  bool dcs_inverted;  // false = normal (D###N), true = inverted (D###I)
 
   Talkgroup(int sys_num, long num, std::string mode, std::string alpha_tag, std::string description, std::string tag, std::string group, int priority, unsigned long preferredNAC);
-  Talkgroup(int sys_num, long num, double freq, double tone, std::string alpha_tag, std::string description, std::string tag, std::string group, double squelch_db, bool signal_detection);
+  Talkgroup(int sys_num, long num, double freq, double tone, int dcs_code, bool dcs_inverted, std::string alpha_tag, std::string description, std::string tag, std::string group, double squelch_db, bool signal_detection);
 
   bool is_active();
   int get_priority();

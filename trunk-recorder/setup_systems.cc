@@ -4,6 +4,8 @@ bool setup_conventional_channel(System *system, double frequency, long channel_i
   bool channel_added = false;
   Source *source = NULL;
   float tone_freq = 0.0;
+  int dcs_code = 0;
+  bool dcs_inverted = false;
   for (std::vector<Source *>::iterator src_it = sources.begin(); src_it != sources.end(); src_it++) {
     source = *src_it;
 
@@ -19,7 +21,9 @@ bool setup_conventional_channel(System *system, double frequency, long channel_i
       Call_conventional *call = NULL;
       if (system->has_channel_file()) {
         Talkgroup *tg = system->find_talkgroup_by_freq(frequency);
-        tone_freq = tg->tone;
+        tone_freq    = tg->tone;
+        dcs_code     = tg->dcs_code;
+        dcs_inverted = tg->dcs_inverted;
 
         // If there is a per channel squelch setting, use it, otherwise use the system squelch setting
         if (tg->squelch_db != DB_UNSET) {
@@ -36,8 +40,8 @@ bool setup_conventional_channel(System *system, double frequency, long channel_i
       BOOST_LOG_TRIVIAL(info) << "[" << system->get_short_name() << "]\tMonitoring " << system->get_system_type() << " channel: " << format_freq(frequency) << " Talkgroup: " << channel_index;
       if (system->get_system_type() == "conventional") {
         analog_recorder_sptr rec;
-        if (tone_freq > 0.0) {
-          rec = source->create_conventional_recorder(tb, tone_freq);
+        if (tone_freq > 0.0 || dcs_code > 0) {
+          rec = source->create_conventional_recorder(tb, tone_freq, dcs_code, dcs_inverted);
         } else {
           rec = source->create_conventional_recorder(tb);
         }

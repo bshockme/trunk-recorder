@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <string>
 
 Talkgroups::Talkgroups() {}
 
@@ -159,6 +160,8 @@ void Talkgroups::load_channels(int sys_num, std::string filename) {
     bool signal_detector = true;
     double freq = 0;
     double tone = 0;
+    int dcs_code = 0;
+    bool dcs_inverted = false;
     bool enable = true;
 
     if ((reader.index_of("TG Number") >= 0) && !row["TG Number"].is_null() && row["TG Number"].is_int()) {
@@ -184,8 +187,21 @@ void Talkgroups::load_channels(int sys_num, std::string filename) {
       group = row["Category"].get<std::string>();
     }
 
-    if ((reader.index_of("Tone") >= 0) && row["Tone"].is_float()) {
-      tone = row["Tone"].get<double>();
+    if (reader.index_of("Tone") >= 0) {
+      if (row["Tone"].is_float()) {
+        tone = row["Tone"].get<double>(); // CTCSS tone frequency in Hz
+      } else if (row["Tone"].is_str()) {
+        std::string tone_str = row["Tone"].get<std::string>();
+        if (!tone_str.empty() && (tone_str[0] == 'D' || tone_str[0] == 'd')) {
+          // DCS format: D###N (normal) or D###I (inverted)
+          char polarity = tone_str.back();
+          dcs_inverted = (polarity == 'I' || polarity == 'i');
+          std::string digits = tone_str.substr(1, tone_str.size() - 2);
+          if (!digits.empty()) {
+            dcs_code = std::stoi(digits);
+          }
+        }
+      }
     }
 
     if ((reader.index_of("Frequency") >= 0) && row["Frequency"].is_num()) {
@@ -213,7 +229,7 @@ void Talkgroups::load_channels(int sys_num, std::string filename) {
       }
     }
     if (enable) {
-      tg = new Talkgroup(sys_num, tg_number, freq, tone, alpha_tag, description, tag, group, squelch_db, signal_detector);
+      tg = new Talkgroup(sys_num, tg_number, freq, tone, dcs_code, dcs_inverted, alpha_tag, description, tag, group, squelch_db, signal_detector);
       talkgroups.push_back(tg);
       lines_pushed++;
     }

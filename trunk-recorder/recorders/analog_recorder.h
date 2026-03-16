@@ -34,6 +34,7 @@
 #include <gnuradio/filter/iir_filter_ffd.h>
 
 #include <gnuradio/analog/ctcss_squelch_ff.h>
+#include "../gr_blocks/dcs_squelch_ff.h"
 #include <gnuradio/analog/pwr_squelch_cc.h>
 #include <gnuradio/analog/pwr_squelch_ff.h>
 #include <gnuradio/analog/quadrature_demod_cf.h>
@@ -67,12 +68,14 @@ int plugman_signal(long unitId, const char *signaling_type, gr::blocks::SignalTy
 
 analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type);
 analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type, float tone_freq);
+analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type, float tone_freq, int dcs_code, bool dcs_inverted);
 class analog_recorder : public gr::hier_block2, public Recorder {
   friend analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type);
   friend analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type, float tone_freq);
+  friend analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type, float tone_freq, int dcs_code, bool dcs_inverted);
 
 protected:
-  analog_recorder(Source *src, System *system, Recorder_Type type, float tone_freq);
+  analog_recorder(Source *src, System *system, Recorder_Type type, float tone_freq, int dcs_code, bool dcs_inverted);
 
 public:
   ~analog_recorder();
@@ -113,6 +116,8 @@ private:
   long talkgroup;
   long input_rate;
   float tone_freq;
+  int   dcs_code;
+  bool  dcs_inverted;
   double system_channel_rate;
   double initial_rate;
   float quad_gain;
@@ -121,6 +126,7 @@ private:
   time_t timestamp;
   time_t starttime;
   bool use_tone_squelch;
+  bool use_dcs_squelch;
 
   State state;
   std::vector<float> channel_lpf_taps;
@@ -154,6 +160,7 @@ private:
   gr::filter::fir_filter_fff::sptr low_f;
   gr::analog::pwr_squelch_ff::sptr squelch_two;
   gr::analog::ctcss_squelch_ff::sptr tone_squelch;
+  dcs_squelch_ff_sptr dcs_squelch;
 
   gr::analog::quadrature_demod_cf::sptr demod;
   gr::blocks::float_to_short::sptr converter;

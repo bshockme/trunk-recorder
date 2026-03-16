@@ -38,11 +38,15 @@ std::vector<float> design_filter(double interpolation, double deci) {
 }
 
 analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type) {
-  return gnuradio::get_initial_sptr(new analog_recorder(src, static_cast<System*>(nullptr), type, -1));
+  return gnuradio::get_initial_sptr(new analog_recorder(src, static_cast<System*>(nullptr), type, -1, 0, false));
 }
 
 analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type, float tone_freq) {
-  return gnuradio::get_initial_sptr(new analog_recorder(src, static_cast<System*>(nullptr), type, tone_freq));
+  return gnuradio::get_initial_sptr(new analog_recorder(src, static_cast<System*>(nullptr), type, tone_freq, 0, false));
+}
+
+analog_recorder_sptr make_analog_recorder(Source *src, Recorder_Type type, float tone_freq, int dcs_code, bool dcs_inverted) {
+  return gnuradio::get_initial_sptr(new analog_recorder(src, static_cast<System*>(nullptr), type, tone_freq, dcs_code, dcs_inverted));
 }
 
 void analog_recorder::set_tau(float tau) {
@@ -83,7 +87,7 @@ void analog_recorder::calculate_iir_taps(float tau) {
   d_fbtaps[1] = -p1;
 }
 
-analog_recorder::analog_recorder(Source *src, System *system, Recorder_Type type, float tone_freq)
+analog_recorder::analog_recorder(Source *src, System *system, Recorder_Type type, float tone_freq, int dcs_code, bool dcs_inverted)
     : gr::hier_block2("analog_recorder",
                       gr::io_signature::make(1, 1, sizeof(gr_complex)),
                       gr::io_signature::make(0, 0, sizeof(float))),
@@ -117,6 +121,16 @@ analog_recorder::analog_recorder(Source *src, System *system, Recorder_Type type
     this->tone_freq = 0;
   }
 
+  if (dcs_code > 0) {
+    use_dcs_squelch   = true;
+    this->dcs_code    = dcs_code;
+    this->dcs_inverted = dcs_inverted;
+  } else {
+    use_dcs_squelch   = false;
+    this->dcs_code    = 0;
+    this->dcs_inverted = false;
+  }
+
   if (config != NULL) {
     use_streaming = config->enable_audio_streaming;
   }
@@ -143,6 +157,10 @@ analog_recorder::analog_recorder(Source *src, System *system, Recorder_Type type
 
   if (use_tone_squelch) {
     tone_squelch = gr::analog::ctcss_squelch_ff::make(system_channel_rate, this->tone_freq, 0.01, 0, 0, false);
+  }
+
+  if (use_dcs_squelch) {
+    dcs_squelch = make_dcs_squelch_ff((int)system_channel_rate, this->dcs_code, this->dcs_inverted, false);
   }
   // k = quad_rate/(2*math.pi*max_dev) = 48k / (6.283185*5000) = 1.527
 
@@ -199,10 +217,20 @@ analog_recorder::analog_recorder(Source *src, System *system, Recorder_Type type
   // using squelch
   connect(self(), 0, prefilter, 0);
   connect(prefilter, 0, demod, 0);
-  connect(demod, 0, deemph, 0);
+
+  // DCS squelch gates the demodulated signal before de-emphasis so the
+  // <300 Hz subcarrier is still present for detection.
+  if (use_dcs_squelch) {
+    connect(demod, 0, dcs_squelch, 0);
+    connect(dcs_squelch, 0, deemph, 0);
+  } else {
+    connect(demod, 0, deemph, 0);
+  }
+
+  // CTCSS squelch operates after de-emphasis on the audio band.
   if (use_tone_squelch) {
-    connect(deemph, 0, tone_squelch, 0); 
-      connect(tone_squelch, 0, decim_audio, 0);
+    connect(deemph, 0, tone_squelch, 0);
+    connect(tone_squelch, 0, decim_audio, 0);
   } else {
     connect(deemph, 0, decim_audio, 0);
   }
