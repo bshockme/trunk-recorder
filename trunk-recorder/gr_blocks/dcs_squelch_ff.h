@@ -7,7 +7,7 @@
 #ifndef INCLUDED_DCS_SQUELCH_FF_H
 #define INCLUDED_DCS_SQUELCH_FF_H
 
-#include <gnuradio/block.h>
+#include <gnuradio/sync_block.h>
 
 class dcs_squelch_ff;
 
@@ -31,7 +31,7 @@ typedef std::shared_ptr<dcs_squelch_ff> dcs_squelch_ff_sptr;
  */
 dcs_squelch_ff_sptr make_dcs_squelch_ff(int sample_rate, int dcs_code, bool inverted, bool gate = false);
 
-class dcs_squelch_ff : public gr::block {
+class dcs_squelch_ff : public gr::sync_block {
   friend dcs_squelch_ff_sptr make_dcs_squelch_ff(int sample_rate, int dcs_code, bool inverted, bool gate);
 
 protected:
@@ -45,18 +45,15 @@ public:
   bool is_inverted() const;
   bool unmuted() const;
 
-  void forecast(int noutput_items, gr_vector_int &ninput_items_required) override;
-  int general_work(int noutput_items,
-                   gr_vector_int &ninput_items,
-                   gr_vector_const_void_star &input_items,
-                   gr_vector_void_star &output_items) override;
+  int work(int noutput_items,
+           gr_vector_const_void_star &input_items,
+           gr_vector_void_star &output_items) override;
 
 private:
   int   d_sample_rate;
   int   d_dcs_code;       // as entered (e.g. 23 for D023)
-  int   d_target_word;    // 23-bit Golay-encoded target codeword
+  uint32_t d_target_word; // 23-bit Golay-encoded target codeword
   bool  d_inverted;
-  bool  d_gate;
   bool  d_unmuted;
 
   // Decimation / subcarrier extraction
@@ -67,11 +64,11 @@ private:
   int   d_decim_count;
   float d_decim_acc;
 
-  // Simple IIR low-pass to isolate <250 Hz subcarrier (at 4800 Hz)
+  // Simple IIR low-pass to isolate <200 Hz subcarrier (at 4800 Hz)
   float d_lp_state;
-  static constexpr float LP_ALPHA = 0.34f; // cutoff ~250 Hz at 4800 Hz
+  static constexpr float LP_ALPHA = 0.16f; // cutoff ~150 Hz at 4800 Hz — covers 134.4 bps fundamental
 
-  // Manchester / bit clock recovery
+  // NRZ bit clock recovery
   double d_bit_phase;       // 0.0 .. 1.0 within a bit period
   double d_samples_per_bit; // 4800 / 134.4 ≈ 35.714
 
@@ -82,10 +79,14 @@ private:
   uint32_t d_shift_reg;
 
   // Lock state
-  int  d_match_count;   // consecutive matching words needed to open squelch
-  int  d_loss_count;    // consecutive missing words to close squelch
+  int  d_match_count;     // consecutive matching words needed to open squelch
+  int  d_loss_count;      // consecutive missing words to close squelch
+  int  d_bits_since_match; // bits received since last matching word
   static const int MATCH_THRESH = 2;
   static const int LOSS_THRESH  = 5;
+  // Close squelch if no matching word seen for ~3 full codeword periods
+  // 3 * 23 bits = 69 bits ≈ 513 ms at 134.4 bps
+  static const int TIMEOUT_BITS = 69;
 
   // Golay encode/decode helpers
   static uint32_t golay_encode(uint16_t data12);
