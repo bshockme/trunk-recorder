@@ -24,11 +24,7 @@
 // Factory
 // ---------------------------------------------------------------------------
 dcs_squelch_ff_sptr make_dcs_squelch_ff(int sample_rate, int dcs_code, bool inverted, bool gate) {
-#if GNURADIO_VERSION < 0x030900
   return dcs_squelch_ff_sptr(new dcs_squelch_ff(sample_rate, dcs_code, inverted, gate));
-#else
-  return std::make_shared<dcs_squelch_ff>(sample_rate, dcs_code, inverted, gate);
-#endif
 }
 
 // ---------------------------------------------------------------------------
