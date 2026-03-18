@@ -432,6 +432,19 @@ bool analog_recorder::start(Call *call) {
   return true;
 }
 
+std::string analog_recorder::get_squelch_type_string() {
+  if (use_dcs_squelch) {
+    std::string code_str = std::string(dcs_code < 100 ? "0" : "") + std::string(dcs_code < 10 ? "0" : "") + std::to_string(dcs_code);
+    return " DCS: D" + code_str + (dcs_inverted ? "I" : "N");
+  } else if (use_tone_squelch) {
+    // Format to 1 decimal place
+    char buf[32];
+    snprintf(buf, sizeof(buf), " CTCSS: %.1f Hz", tone_freq);
+    return std::string(buf);
+  }
+  return "";
+}
+
 double analog_recorder::get_output_sample_rate() {
   return wav_sample_rate;
 }

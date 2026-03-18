@@ -106,6 +106,7 @@ public:
   void process_message_queues(void);
   void decoder_callback_handler(long unitId, const char *signaling_type, gr::blocks::SignalType signal);
   void plugin_callback_handler(int16_t *samples, int sampleCount);
+  std::string get_squelch_type_string() override;
   double get_output_sample_rate();
   double since_last_write();
   void set_tau(float tau);

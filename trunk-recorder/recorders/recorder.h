@@ -110,6 +110,7 @@ public:
   virtual int get_recording_count() { return recording_count; }
   virtual double get_recording_duration() { return recording_duration; }
   virtual void process_message_queues(void){};
+  virtual std::string get_squelch_type_string() { return ""; }
   virtual double get_output_sample_rate() { return 0; }
   virtual int get_output_channels() { return 1; }
   virtual bool get_enable_audio_streaming() { return d_enable_audio_streaming; };
