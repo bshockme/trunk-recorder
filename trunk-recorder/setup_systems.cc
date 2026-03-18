@@ -37,7 +37,9 @@ bool setup_conventional_channel(System *system, double frequency, long channel_i
         call = new Call_conventional(channel_index, frequency, system, config, system->get_squelch_db(), true);  // signal detection is always true when a channel file is not used
       }
 
-      BOOST_LOG_TRIVIAL(info) << "[" << system->get_short_name() << "]\tMonitoring " << system->get_system_type() << " channel: " << format_freq(frequency) << " Talkgroup: " << channel_index;
+      BOOST_LOG_TRIVIAL(info) << "[" << system->get_short_name() << "]\tMonitoring " << system->get_system_type() << " channel: " << format_freq(frequency) << " Talkgroup: " << channel_index
+                              << (tone_freq > 0.0 ? " CTCSS: " + std::to_string(tone_freq) + " Hz" : "")
+                              << (dcs_code > 0 ? " DCS: D" + std::string(dcs_code < 100 ? "0" : "") + std::string(dcs_code < 10 ? "0" : "") + std::to_string(dcs_code) + (dcs_inverted ? "I" : "N") : "");
       if (system->get_system_type() == "conventional") {
         analog_recorder_sptr rec;
         if (tone_freq > 0.0 || dcs_code > 0) {
